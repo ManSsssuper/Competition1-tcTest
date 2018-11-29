@@ -1,0 +1,14 @@
+#########################################################
+#在model1上面做的修改
+#删除空值较多的列
+	#transaction
+		#fts1删除market_type
+		#fts2删除code1、code2、device1、geo_code、market_code、market_type、acc_id2、acc_id3、mac1，device_code1、2、3合并,
+		#fts3合并,"device_code1","device_code2","device_code3",
+	#operation
+		#fts2删除geo_code、mac1、mac2，device_code1、2、3合并，ip1、ip2合并，ip1_sub,ip2_sub合并
+		#fts3合并device_code1","device_code2","device_code3，"ip1","ip2","ip1_sub","ip2_sub"
+fts(3)取消填充0值
+使用nunique()
+
+		

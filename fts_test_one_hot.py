@@ -16,7 +16,7 @@ train_tag=pd.read_csv(r"D:\DA_competition\DC\data\tag_train.csv")
 train_tr=pd.read_csv(r"D:\DA_competition\DC\data\transaction_train.csv")
 test_op=pd.read_csv(r"D:\DA_competition\DC\data\operation_test.csv")
 test_tr=pd.read_csv(r"D:\DA_competition\DC\data\transaction_test.csv")
- 
+
 #处理时间
 train_op["hour"]=train_op.time.apply(lambda x:x.split(":")[0])
 train_tr["hour"]=train_tr.time.apply(lambda x:x.split(":")[0])
@@ -103,41 +103,29 @@ train=train.drop(["day_lencoder_op","success_lencoder_op",
 test=test.drop(["day_lencoder_op","success_lencoder_op",
                 "ip2_lencoder_op","ip2_sub_lencoder_op","market_code_lencoder_tr"],axis=1)
 
-#################################添加测试特征#######################################
-#添加上测试特征
-
-
-#添加那几个关键字段的count
-def get_fields_as_key_fts3(data,fields,df_by_uid,name):
-    for field in fields:
-        f_count=data.groupby(field)["UID"].agg(["nunique","count"])
-
-        
-        f_count.columns=[field+"_f_nunique_"+name,field+"_f_count_"+name]
-        f_count=f_count.reset_index(drop=False)
-        fts_mid=pd.merge(data[["UID",field]],f_count,how="left",on=field).drop_duplicates()
-        fts_mid=fts_mid.drop(field,axis=1)
-        
-        fts=fts_mid.groupby("UID")[[field+"_f_nunique_"+name,field+"_f_count_"+name]].agg(["mean","max","min","sum"])
-        fts.columns=["_".join(x) for x in fts.columns.ravel()]
-        fts=fts.reset_index(drop=False)      
-        df_by_uid=pd.merge(df_by_uid,fts,how="left",on="UID")
-    return df_by_uid
-
-#op字段
-op_fields2=["mac1","mac2","wifi","device_code1","device_code2","device_code3","ip1","ip2","ip1_sub","ip2_sub"]
-train=get_fields_as_key_fts3(train_op,op_fields2,train,"op")
-test=get_fields_as_key_fts3(test_op,op_fields2,test,"op")
-print(train.shape)
-
-#tr字段
-tr_fields2=["ip1","ip1_sub","acc_id1","acc_id2","acc_id3","mac1","device_code1","device_code2","device_code3"]
-train=get_fields_as_key_fts3(train_tr,tr_fields2,train,"tr")
-test=get_fields_as_key_fts3(test_tr,tr_fields2,test,"tr")
-print(train.shape)
-
 train=train.fillna(-1)
 test=test.fillna(-1)
+########################################测试特征###################################
+def get_fts_1(data_train,data_test,fields,trainf,testf):
+    data_one_hot=pd.get_dummies(pd.concat([data_train[fields].applymap(str),data_test[fields].applymap(str)],axis=0),dummy_na=True)
+    train_data_one_hot=data_one_hot.iloc[:len(data_train),:].reset_index(drop=True)
+    test_data_one_hot=data_one_hot.iloc[len(data_train):,:].reset_index(drop=True)
+    train_data_one_hot["UID"]=data_train["UID"]
+    test_data_one_hot["UID"]=data_test["UID"]
+
+    trainf=trainf.merge(train_data_one_hot.groupby("UID").sum().reset_index(drop=False),how="left",on="UID")
+    testf=testf.merge(test_data_one_hot.groupby("UID").sum().reset_index(drop=False),how="left",on="UID")
+    return trainf,testf
+
+#op离散字段的cross_type值,涨分
+op_fields1=["mode","success","os","version"]
+train,test=get_fts_1(train_op,test_op,op_fields1,train,test)
+print(train.shape)
+
+#tr离散字段的cross_type值,
+tr_fields1=["channel","amt_src1","trans_type1","amt_src2","trans_type2"]
+train,test=get_fts_1(train_tr,test_tr,tr_fields1,train,test)
+print(train.shape)
 
 ##################################################################################
 train_y=train_tag["Tag"]
@@ -165,7 +153,7 @@ def tpr_weight_funtion(y_true,y_predict):
     尝试一下是预测5次除以5还是训练集全集预测一次提交效果哪个好
 """
 
-def five(train,test,col):
+def five():
     valid_preds=np.zeros(train.shape[0])
     submit_preds=np.zeros(test.shape[0])
     scores=[]
@@ -182,9 +170,8 @@ def five(train,test,col):
             'max_depth': 8,
             'num_leaves':100,
             'lambda_l1': 0.1,
-#            'subsample_by_tree':0.9,
             }
-        n_rounds=1200
+        n_rounds=1100
         clf=lgb.train(params,train_set,n_rounds)
         
         valid_pred=clf.predict(valid_X)
@@ -202,69 +189,8 @@ def five(train,test,col):
     submit=pd.concat([test_id,pd.Series(submit_preds)],axis=1,ignore_index=True)
     submit.columns=["UID","Tag"]
     submit.to_csv(r"D:\DA_competition\DC\result\submit_%s.csv"%str(score),index=False)
-    f=open(r"D:\Desktop\比赛\甜橙\f_count_One_hot_fts_test_在添加le基础上.txt",mode='a')
-    f.write(col+":"+str(scores)+"\n")
-    f.close()
     return score
-max_score=five(train,test,"base:")
-dels=[]
-already_test=[]
-for col in train.columns:
-    if ("_f_nunique_" in col)|("_f_count_" in col):
-        presub="_".join([col.split("_")[0],col.split("_")[1],col.split("_")[2],col.split("_")[3]])
-        if presub not in already_test:
-            already_test.append(presub)
-            train_col=train.drop([presub+"_max",presub+"_mean",presub+"_min",presub+"_sum"],axis=1)
-            test_col=test.drop([presub+"_max",presub+"_mean",presub+"_min",presub+"_sum"],axis=1)
-            """
-            尝试一下是预测5次除以5还是训练集全集预测一次提交效果哪个好
-            """
-            col_score=five(train_col,test_col,presub)
-            if col_score>=max_score:
-                max_score=col_score
-                train=train.drop([presub+"_max",presub+"_mean",presub+"_min",presub+"_sum"],axis=1)
-                test=test.drop([presub+"_max",presub+"_mean",presub+"_min",presub+"_sum"],axis=1)
-                print("删除：",presub)
-                dels.append(presub)
-            else:
-                print("保留：",presub)
-	
-print(dels)
-f=open(r"D:\Desktop\比赛\甜橙\f_count_One_hot_fts_test_在添加le基础上.txt",mode='a')
-f.write(str(dels)+"\n")
-f.close()
 
-####################################################################################
-def get_fts_1(data_train,data_test,fields,trainf,testf):
-    data_one_hot=pd.get_dummies(pd.concat([data_train[fields].applymap(str),data_test[fields].applymap(str)],axis=0),dummy_na=True)
-    train_data_one_hot=data_one_hot.iloc[:len(data_train),:].reset_index(drop=True)
-    test_data_one_hot=data_one_hot.iloc[len(data_train):,:].reset_index(drop=True)
-    train_data_one_hot["UID"]=data_train["UID"]
-    test_data_one_hot["UID"]=data_test["UID"]
-
-    trainf=trainf.merge(train_data_one_hot.groupby("UID").sum().reset_index(drop=False),how="left",on="UID")
-    testf=testf.merge(test_data_one_hot.groupby("UID").sum().reset_index(drop=False),how="left",on="UID")
-    return trainf,testf
-add_one_hot=[]
-def test_one_hot(train_data,test_data,field):
-    global train,test,max_score,add_one_hot
-    train_f,test_f=get_fts_1(train_data,test_data,field,train,test)
-    f_score=five(train_f,test_f,field)
-    if f_score>=max_score:
-        train=train_f
-        test=test_f
-        max_score=f_score
-        add_one_hot.append(field)
-#op离散字段的cross_type值,涨分
-for field in ["success","os","version"]:
-    test_one_hot(train_op,test_op,field)
-
-#tr离散字段的cross_type值,
-for field in ["channel","amt_src1","trans_type1","trans_type2"]:
-    test_one_hot(train_tr,test_tr,field)
-f=open(r"D:\Desktop\比赛\甜橙\f_count_One_hot_fts_test_在添加le基础上.txt",mode='a')
-f.write(str(add_one_hot)+"\n")
-f.close()
-
+five()
 
 

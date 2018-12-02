@@ -132,10 +132,11 @@ tr_fields2=["ip1","ip1_sub","acc_id1","acc_id2","acc_id3","mac1","device_code1",
 train=get_fields_as_key_fts3(train_tr,tr_fields2,train,"tr")
 test=get_fields_as_key_fts3(test_tr,tr_fields2,test,"tr")
 print(train.shape)
-train=train.drop(['mac2,f,count,op', 'wifi,f,nunique,op', 'wifi,f,count,op',
-                  'ip2,f,count,op', 'ip2_sub,f,nunique,op', 'ip1_sub,f,nunique,tr'],axis=1)
-test=test.drop(['mac2,f,count,op', 'wifi,f,nunique,op', 'wifi,f,count,op',
-                'ip2,f,count,op', 'ip2_sub,f,nunique,op', 'ip1_sub,f,nunique,tr'],axis=1)
+pre=["mac2,f,count,op", "wifi,f,nunique,op", "wifi,f,count,op","ip2,f,count,op", "ip2_sub,f,nunique,op", "ip1_sub,f,nunique,tr"]
+after=["mean","max","min","sum"]
+
+train=train.drop([x+","+y for x in pre for y in after],axis=1)
+test=test.drop([x+","+y for x in pre for y in after],axis=1)
 train=train.fillna(-1)
 test=test.fillna(-1)
 

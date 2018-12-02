@@ -30,6 +30,7 @@ train_fts=train_tag.drop("Tag",axis=1)
 
 #得到基础特征
 #得到基础特征
+
 def get_fea_base(op,tr,df_by_uid):
     op_fields=[]
     tr_fields=[]
@@ -211,64 +212,29 @@ def five(train,test,col):
     f.close()
     return score
 max_score=five(train,test,"base:")
-#dels=[]
-#already_test=[]
-#for col in train.columns:
-#    if (",f,nunique," in col)|(",f,count," in col):
-#        presub=",".join([col.split(",")[0],col.split(",")[1],col.split(",")[2],col.split(",")[3]])
-#        if presub not in already_test:
-#            already_test.append(presub)
-#            train_col=train.drop([presub+",max",presub+",mean",presub+",min",presub+",sum"],axis=1)
-#            test_col=test.drop([presub+",max",presub+",mean",presub+",min",presub+",sum"],axis=1)
-#            """
-#            尝试一下是预测5次除以5还是训练集全集预测一次提交效果哪个好
-#            """
-#            col_score=five(train_col,test_col,presub)
-#            if col_score>=max_score:
-#                max_score=col_score
-#                train=train.drop([presub+",max",presub+",mean",presub+",min",presub+",sum"],axis=1)
-#                test=test.drop([presub+",max",presub+",mean",presub+",min",presub+",sum"],axis=1)
-#                print("删除：",presub)
-#                dels.append(presub)
-#            else:
-#                print("保留：",presub)
-#	
-#print(dels)
-#f=open(r"D:\Desktop\比赛\甜橙\f_count_One_hot_fts_test_在添加le基础上.txt",mode='a')
-#f.write(str(dels)+"\n")
-#f.close()
+dels=[]
+already_test=[]
+for col in train.columns:
+   if (",f,nunique," in col)|(",f,count," in col):
+       presub=",".join([col.split(",")[0],col.split(",")[1],col.split(",")[2],col.split(",")[3]])
+       if presub not in already_test:
+           already_test.append(presub)
+           train_col=train.drop([presub+",max",presub+",mean",presub+",min",presub+",sum"],axis=1)
+           test_col=test.drop([presub+",max",presub+",mean",presub+",min",presub+",sum"],axis=1)
+           """
+           尝试一下是预测5次除以5还是训练集全集预测一次提交效果哪个好
+           """
+           col_score=five(train_col,test_col,presub)
+           if col_score>=max_score:
+               max_score=col_score
+               train=train.drop([presub+",max",presub+",mean",presub+",min",presub+",sum"],axis=1)
+               test=test.drop([presub+",max",presub+",mean",presub+",min",presub+",sum"],axis=1)
+               print("删除：",presub)
+               dels.append(presub)
+           else:
+               print("保留：",presub)
 
-####################################################################################
-def get_fts_1(data_train,data_test,fields,trainf,testf):
-    data_one_hot=pd.get_dummies(pd.concat([data_train[fields].apply(str),data_test[fields].apply(str)],axis=0),dummy_na=True)
-    train_data_one_hot=data_one_hot.iloc[:len(data_train),:].reset_index(drop=True)
-    test_data_one_hot=data_one_hot.iloc[len(data_train):,:].reset_index(drop=True)
-    train_data_one_hot["UID"]=data_train["UID"]
-    test_data_one_hot["UID"]=data_test["UID"]
-
-    trainf=trainf.merge(train_data_one_hot.groupby("UID").sum().reset_index(drop=False),how="left",on="UID")
-    testf=testf.merge(test_data_one_hot.groupby("UID").sum().reset_index(drop=False),how="left",on="UID")
-    return trainf,testf
-add_one_hot=[]
-def test_one_hot(train_data,test_data,field):
-    global train,test,max_score,add_one_hot
-    train_f,test_f=get_fts_1(train_data,test_data,field,train,test)
-    f_score=five(train_f,test_f,field)
-    if f_score>=max_score:
-        train=train_f
-        test=test_f
-        max_score=f_score
-        add_one_hot.append(field)
-#op离散字段的cross_type值,涨分
-for field in ["success","os","version"]:
-    test_one_hot(train_op,test_op,field)
-
-#tr离散字段的cross_type值,
-for field in ["channel","amt_src1","trans_type1","trans_type2"]:
-    test_one_hot(train_tr,test_tr,field)
+print(dels)
 f=open(r"D:\Desktop\比赛\甜橙\f_count_One_hot_fts_test_在添加le基础上.txt",mode='a')
-f.write(str(add_one_hot)+"\n")
+f.write(str(dels)+"\n")
 f.close()
-
-
-

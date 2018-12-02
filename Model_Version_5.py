@@ -103,6 +103,39 @@ train=train.drop(["day_lencoder_op","success_lencoder_op",
 test=test.drop(["day_lencoder_op","success_lencoder_op",
                 "ip2_lencoder_op","ip2_sub_lencoder_op","market_code_lencoder_tr"],axis=1)
 
+    
+#添加那几个关键字段的count
+def get_fields_as_key_fts3(data,fields,df_by_uid,name):
+    for field in fields:
+        f_count=data.groupby(field)["UID"].agg(["nunique","count"])
+
+        
+        f_count.columns=[field+",f,nunique,"+name,field+",f,count,"+name]
+        f_count=f_count.reset_index(drop=False)
+        fts_mid=pd.merge(data[["UID",field]],f_count,how="left",on=field).drop_duplicates()
+        fts_mid=fts_mid.drop(field,axis=1)
+        
+        fts=fts_mid.groupby("UID")[[field+",f,nunique,"+name,field+",f,count,"+name]].agg(["mean","max","min","sum"])
+        fts.columns=[",".join(x) for x in fts.columns.ravel()]
+        fts=fts.reset_index(drop=False)      
+        df_by_uid=pd.merge(df_by_uid,fts,how="left",on="UID")
+    return df_by_uid
+#['mac2,f,count,op', 'wifi,f,nunique,op', 'wifi,f,count,op', 'ip2,f,count,op', 'ip2_sub,f,nunique,op', 'ip1_sub,f,nunique,tr']
+#op字段
+op_fields2=["mac1","mac2","wifi","device_code1","device_code2","device_code3","ip1","ip2","ip1_sub","ip2_sub"]
+train=get_fields_as_key_fts3(train_op,op_fields2,train,"op")
+test=get_fields_as_key_fts3(test_op,op_fields2,test,"op")
+print(train.shape)
+
+#tr字段
+tr_fields2=["ip1","ip1_sub","acc_id1","acc_id2","acc_id3","mac1","device_code1","device_code2","device_code3"]
+train=get_fields_as_key_fts3(train_tr,tr_fields2,train,"tr")
+test=get_fields_as_key_fts3(test_tr,tr_fields2,test,"tr")
+print(train.shape)
+train=train.drop(['mac2,f,count,op', 'wifi,f,nunique,op', 'wifi,f,count,op',
+                  'ip2,f,count,op', 'ip2_sub,f,nunique,op', 'ip1_sub,f,nunique,tr'],axis=1)
+test=test.drop(['mac2,f,count,op', 'wifi,f,nunique,op', 'wifi,f,count,op',
+                'ip2,f,count,op', 'ip2_sub,f,nunique,op', 'ip1_sub,f,nunique,tr'],axis=1)
 train=train.fillna(-1)
 test=test.fillna(-1)
 

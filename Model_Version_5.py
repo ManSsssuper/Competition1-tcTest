@@ -263,10 +263,10 @@ test=get_time_fea(test_op,test,"op")
 train=get_time_fea(train_tr,train,"tr")
 test=get_time_fea(test_tr,test,"tr")
 
-#删除['op_first_day_time_fea', 'op_min_interval_time_fea', 'money_last_sum']
+
 train=train.drop(['op_first_day_time_fea', 'op_min_interval_time_fea', 'money_last_sum'],axis=1)
 test=test.drop(['op_first_day_time_fea', 'op_min_interval_time_fea', 'money_last_sum'],axis=1)
-print(train.shape)
+
 #第一次记录的labelencoder(op,tr)
 #最后一次记录的labelencoder(op,tr)
 
@@ -276,8 +276,9 @@ drop_cols=[]
 for tag in ['op,min', 'tr,sum', 'op_sum']:
     for col in train.columns:
         if tag in col:
-            drop_cols.append(col)
+            drop_cols.append(col) 
 drop_cols.append('version_count')
+print(train.shape)
 train=train.drop(drop_cols,axis=1)
 test=test.drop(drop_cols,axis=1)
 #####################################################################################
@@ -372,7 +373,25 @@ def get_rule_submit(data_train,data_test,train_min,test_min,ratio_1_min,ratio_0_
             s[submit[submit.UID.isin(data_test[data_test[field].isin(list(f_value_1.index))].UID.unique())].index]=1
         submit.Tag=s
     return submit
-submit=get_rule_submit(train_op,test_op,100,100,1,0,test_op.columns[1:],submit)
-submit=get_rule_submit(train_tr,test_tr,100,100,1,0,test_tr.columns[1:],submit)
+#submit=get_rule_submit(train_op,test_op,100,100,1,0,test_op.columns[1:],submit)
+#submit=get_rule_submit(train_tr,test_tr,100,100,1,0,test_tr.columns[1:],submit)
+s=np.array(submit.Tag)
+s[submit[submit.UID.isin(test_op[test_op["version"]=="4.1.7"].UID.unique())].index]=1
+s[submit[submit.UID.isin(test_op[test_op["ip1"]=="0fe293bea342665a"].UID.unique())].index]=1
+s[submit[submit.UID.isin(test_tr[test_tr["channel"]==118].UID.unique())].index]=1
+s[submit[submit.UID.isin(test_tr[test_tr["channel"]==119].UID.unique())].index]=0
+s[submit[submit.UID.isin(test_tr[test_tr["trans_amt"]==7847].UID.unique())].index]=0
+s[submit[submit.UID.isin(test_tr[test_tr["trans_amt"]==4405].UID.unique())].index]=0
+s[submit[submit.UID.isin(test_tr[test_tr["amt_src1"]=="fd4d2d1006a95637"].UID.unique())].index]=1
+s[submit[submit.UID.isin(test_tr[test_tr["amt_src1"]=="b0a5496f0db7f70a"].UID.unique())].index]=0
+s[submit[submit.UID.isin(test_tr[test_tr["amt_src1"]=="8c753ae7afb60e61"].UID.unique())].index]=0
+s[submit[submit.UID.isin(test_tr[test_tr["merchant"].isin(["8b3f74a1391b5427","922720f3827ccef8","0e90f47392008def","5776870b5747e14e","1f72814f76a984fa","2b2e7046145d9517","2260d61b622795fb","6d55ccc689b910ee","4bca6018239c6201"])].UID.unique())].index]=1
+s[submit[submit.UID.isin(test_tr[test_tr["merchant"].isin(["1e70ea89a4cbb3fe","0b5b36b39b5cb657","7051de5689e83caa"])].UID.unique())].index]=0
+s[submit[submit.UID.isin(test_tr[test_tr["code1"]=="f1fa4af14fd5b68f"].UID.unique())].index]=1
+s[submit[submit.UID.isin(test_tr[test_tr["trans_type1"]=="4adc3de71fe1a83c"].UID.unique())].index]=0
+s[submit[submit.UID.isin(test_tr[test_tr["trans_type1"]=="85bced5214d33ad2"].UID.unique())].index]=0
+s[submit[submit.UID.isin(test_tr[test_tr["amt_src2"]=="6ff95b0f27cad429"].UID.unique())].index]=0
+submit.Tag=s
+
 submit.to_csv(r"D:\DA_competition\DC\result\submit_%s.csv"%str(score),index=False)
 

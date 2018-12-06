@@ -61,8 +61,6 @@ def get_fea_base(op,tr,df_by_uid):
     df_by_uid=df_by_uid.merge(tr_fts2,how="left",on="UID")
     return df_by_uid
 
-
-
 train=get_fea_base(train_op,train_tr,train_fts)
 test=get_fea_base(test_op,test_tr,test_fts)
 
@@ -88,6 +86,7 @@ def get_label_in_coder_fts(train_data,test_data,fields,train,test,name,first=Tru
     else:
         s=data.groupby("UID").agg(lambda x:list(pd.Series.mode(x))[-1])
     
+
     fts=pd.DataFrame(s.index).applymap(int)
     le=LabelEncoder()
     for col in s.columns:
@@ -140,7 +139,8 @@ test=test.drop([x+","+y for x in pre for y in after],axis=1)
 
 print(train.shape)
 
-##################################################################################
+###################################################################################
+
 
 day_and_time_tr_train=train_tr["day"].apply(str)+train_tr["time"]
 train_tr["day_and_time"]=day_and_time_tr_train.apply(lambda x:int(x.replace(":","")))
@@ -262,16 +262,15 @@ train=get_time_fea(train_op,train,"op")
 test=get_time_fea(test_op,test,"op")
 train=get_time_fea(train_tr,train,"tr")
 test=get_time_fea(test_tr,test,"tr")
-
+print(train.shape)
 #删除['op_first_day_time_fea', 'op_min_interval_time_fea', 'money_last_sum']
 train=train.drop(['op_first_day_time_fea', 'op_min_interval_time_fea', 'money_last_sum'],axis=1)
 test=test.drop(['op_first_day_time_fea', 'op_min_interval_time_fea', 'money_last_sum'],axis=1)
-print(train.shape)
 #第一次记录的labelencoder(op,tr)
 #最后一次记录的labelencoder(op,tr)
 
 #操作表和交易表之间相同字段的联系
-##########################特征删除##################################################
+###################################################################################
 drop_cols=[]
 for tag in ['op,min', 'tr,sum', 'op_sum']:
     for col in train.columns:
@@ -280,7 +279,6 @@ for tag in ['op,min', 'tr,sum', 'op_sum']:
 drop_cols.append('version_count')
 train=train.drop(drop_cols,axis=1)
 test=test.drop(drop_cols,axis=1)
-#####################################################################################
 #得到训练集和测试集顺便补充缺失值-1
 train=train.fillna(-1)
 test=test.fillna(-1)
@@ -308,48 +306,11 @@ def tpr_weight_funtion(y_true,y_predict):
 """
     尝试一下是预测5次除以5还是训练集全集预测一次提交效果哪个好
 """
-
-
-valid_preds=np.zeros(train.shape[0])
-submit_preds=np.zeros(test.shape[0])
-scores=[]
-skf=StratifiedKFold(n_splits=5,random_state=0,shuffle=True)
-for index,(train_index,valid_index) in enumerate(skf.split(train,train_y)):
-    train_set=lgb.Dataset(train.iloc[train_index],train_y.iloc[train_index])
-    valid_X=train.iloc[valid_index]
-    valid_y=train_y.iloc[valid_index]
-    
-    params={
-        'boosting':'gbdt',
-        'objective': 'binary',
-        'learning_rate': 0.04,
-        'max_depth': 8,
-        'num_leaves':100,
-        'lambda_l1': 0.1,
-        }
-    n_rounds=1200
-    clf=lgb.train(params,train_set,n_rounds)
-    
-    valid_pred=clf.predict(valid_X)
-    scores.append(tpr_weight_funtion(valid_y,valid_pred))
-    valid_preds[valid_index]=valid_pred
-    
-    #最终结果得到方式是预测五次求均值
-    sub_pred=clf.predict(test)
-    submit_preds+=sub_pred/5
-    
-######################生成提交结果##################################################
-score=tpr_weight_funtion(train_y,valid_preds)
-scores.append(score)
-print(scores)
-
-submit=pd.concat([test_id,pd.Series(submit_preds)],axis=1,ignore_index=True)
-submit.columns=["UID","Tag"]
 #离散值查看
 def get_rule_submit(data_train,data_test,train_min,test_min,ratio_1_min,ratio_0_max,fields,submit):
     for field in fields:
         g=data_train[["UID",field,"Tag"]].drop_duplicates().groupby(field).Tag
-        train_1=g.apply(lambda x:len(x[x==1])/len(x))
+        train_1=g.apply(lambda x:(x==1).sum()/len(x))
         train_1=train_1[(train_1>=ratio_1_min)|(train_1<=ratio_0_max)]
         train_3=g.count()
         train_3=train_3[train_3>=train_min]
@@ -367,12 +328,111 @@ def get_rule_submit(data_train,data_test,train_min,test_min,ratio_1_min,ratio_0_
         
         s=np.array(submit["Tag"])
         if f_value_0.shape[0]>0:
+            print(f_value_0)
             s[submit[submit.UID.isin(data_test[data_test[field].isin(list(f_value_0.index))].UID.unique())].index]=0
         if f_value_1.shape[0]>0:
             s[submit[submit.UID.isin(data_test[data_test[field].isin(list(f_value_1.index))].UID.unique())].index]=1
+            print(f_value_1)
         submit.Tag=s
     return submit
-submit=get_rule_submit(train_op,test_op,100,100,1,0,test_op.columns[1:],submit)
-submit=get_rule_submit(train_tr,test_tr,100,100,1,0,test_tr.columns[1:],submit)
-submit.to_csv(r"D:\DA_competition\DC\result\submit_%s.csv"%str(score),index=False)
 
+def five(train,test,col):
+    valid_preds=np.zeros(train.shape[0])
+    submit_preds=np.zeros(test.shape[0])
+    scores=[]
+    skf=StratifiedKFold(n_splits=5,random_state=0,shuffle=True)
+    for index,(train_index,valid_index) in enumerate(skf.split(train,train_y)):
+        train_set=lgb.Dataset(train.iloc[train_index],train_y.iloc[train_index])
+        valid_X=train.iloc[valid_index]
+        valid_y=train_y.iloc[valid_index]
+        
+        params={
+            'boosting':'gbdt',
+            'objective': 'binary',
+            'learning_rate': 0.04,
+            'max_depth': 8,
+            'num_leaves':100,
+            'lambda_l1': 0.1,
+
+            }
+        n_rounds=1200
+        clf=lgb.train(params,train_set,n_rounds)
+        
+        valid_pred=clf.predict(valid_X)
+        scores.append(tpr_weight_funtion(valid_y,valid_pred))
+        valid_preds[valid_index]=valid_pred
+        
+        #最终结果得到方式是预测五次求均值
+        sub_pred=clf.predict(test)
+        submit_preds+=sub_pred/5
+        
+    ######################生成提交结果##################################################
+    score=tpr_weight_funtion(train_y,valid_preds)
+    scores.append(score)
+    print(col,scores)
+    
+    submit=pd.concat([test_id,pd.Series(submit_preds)],axis=1,ignore_index=True)
+    submit.columns=["UID","Tag"]
+#    submit=get_rule_submit(train_op,test_op,100,100,1,0,test_op.columns[1:],submit)
+#    submit=get_rule_submit(train_tr,test_tr,100,100,1,0,test_tr.columns[1:],submit)
+    submit.to_csv(r"D:\DA_competition\DC\result\submit_%s.csv"%str(score),index=False)
+    f=open(r"D:\Desktop\比赛\甜橙\fts_final_test.txt",mode='a')
+    f.write(col+":"+str(scores)+"\n")
+    f.close()
+    return score
+
+max_score=five(train,test,"all")
+dels=[]
+#for tag in ["f,nunique,op","f,nunique,tr","f,count,op","f,count,tr","tr,mean","op,mean","tr,max","op,max","tr,min","op,min","tr,sum","op_sum"]:
+#    tag_drop=[]
+#    for col in train.columns:
+#        if tag in col:
+#            tag_drop.append(col)
+#    print(tag_drop)
+#    train_tag=train.drop(tag_drop,axis=1)
+#    test_tag=test.drop(tag_drop,axis=1)
+#    tag_score=five(train_tag,test_tag,tag)
+#    if tag_score>=max_score:
+#        max_score=tag_score
+#        train=train.drop(tag_drop,axis=1)
+#        test=test.drop(tag_drop,axis=1)
+#        dels.append(tag)
+#f=open(r"D:\Desktop\比赛\甜橙\fts_final_test.txt",mode='a')
+#f.write(str(dels)+"\n")
+#f.close()
+for col in train.columns:
+    train_col=train.drop(col,axis=1)
+    test_col=test.drop(col,axis=1)
+    col_score=five(train_col,test_col,col)
+    if col_score>=max_score:
+        max_score=col_score
+        train=train.drop(col,axis=1)
+        test=test.drop(col,axis=1)
+        dels.append(col)
+f=open(r"D:\Desktop\比赛\甜橙\fts_final_test.txt",mode='a')
+f.write(str(dels)+"\n")
+f.close()
+#dels=[]
+#for col in train.columns:
+#    if "time_fea" in col:
+#        train_col=train.drop(col,axis=1)
+#        test_col=test.drop(col,axis=1)
+#        col_score=five(train_col,test_col,col)
+#        if col_score>=max_score:
+#            max_score=col_score
+#            train=train.drop(col,axis=1)
+#            test=test.drop(col,axis=1)
+#            dels.append(col)
+#
+#
+#print(dels)
+#for col in ["op_before_tr_count","op_after_tr_count","money_first_max","money_first_min","money_first_sum","money_first_mean","money_last_max","money_last_min","money_last_sum","money_last_mean"]:
+#    train_col=train.drop(col,axis=1)
+#    test_col=test.drop(col,axis=1)
+#    col_score=five(train_col,test_col,col)
+#    if col_score>=max_score:
+#        max_score=col_score
+#        train=train.drop(col,axis=1)
+#        test=test.drop(col,axis=1)
+#        dels.append(col)
+#print(dels)

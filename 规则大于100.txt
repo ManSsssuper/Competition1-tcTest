@@ -1,101 +1,53 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Dec  3 13:56:43 2018
+         ratio  train_all  test_people
+version                               
+4.1.7      1.0        268          319
+                  ratio  train_all  test_people
+ip1                                            
+0fe293bea342665a    1.0        207          318
 
-@author: ManSsssuper
-"""
-mode
-be215a1560dcbf6e  0.000000         11        0          590
-
-         ratio  train_all  train_1  test_people
-version    
-4.1.7      1.0        268      268          319
-6.0.4      0.0         18        0          119     
-
-             ratio  train_all  train_1  test_people
-geo_code                                           
-ws5j      0.000000         12        0          228
-wt47      0.000000         49        0          192
-wt3m      0.000000         68        0          169
-wx4e      0.000000         56        0          159
-wt3q      0.000000         36        0          145
-wxf9      0.000000         65        0          127
-wx4f      0.000000         30        0          123
-wtmk      0.000000         58        0          109
-wt5q      0.000000         12        0          103
-wxrv      0.000000         55        0          101
-
-ip1                                                     
-0fe293bea342665a    1.0        207      207          318
-
-         ratio  train_all  train_1  test_people
-channel                                        
-118        1.0       1371     1371         1264
-119        0.0        246        0          172
-
-           ratio  train_all  train_1  test_people
-trans_amt                                        
-7847         0.0        517        0          428
-4136         0.0         19        0          357
-12604        0.0         46        0          128
-4405         0.0        440        0          120
-
-                  ratio  train_all  train_1  test_people
-amt_src1                                                
-fd4d2d1006a95637    1.0       1371     1371         1264
-d46a2a9577fb52c3    0.0         16        0          226
-b0a5496f0db7f70a    0.0        177        0          154
-8c753ae7afb60e61    0.0        154        0          139
-
-
-                     ratio  train_all  train_1  test_people
-merchant                                                   
-8b3f74a1391b5427  1.000000        923      923          790
-922720f3827ccef8  1.000000        197      197          631
-0e90f47392008def  1.000000        828      828          549
-5776870b5747e14e  1.000000        981      981          471
-1f72814f76a984fa  1.000000        291      291          334
-2b2e7046145d9517  1.000000        147      147          185
-2260d61b622795fb  1.000000        380      380          155
-6d55ccc689b910ee  1.000000        720      720          322
-4bca6018239c6201  1.000000        200      200          310
-
-1e70ea89a4cbb3fe  0.000000        304        0          279
-0b5b36b39b5cb657  0.000000        177        0          122
-7051de5689e83caa  0.000000        154        0          112
-b6fda21b47b7768a  0.000000         33        0          334
-bc0213f01c5023ac  1.000000         59       59          306
-c988e79f00cc2dc0  1.000000         38       38          236
-904538d108065957  0.000000         86        0          144
-                  ratio  train_all  train_1  test_people
-code1                                                   
-f1fa4af14fd5b68f    1.0       1340     1340         1001
-161e5c8f9250d243    1.0         38       38          236
-
-                  ratio  train_all  train_1  test_people
-trans_type1                                             
-4adc3de71fe1a83c    0.0        177        0          154
-85bced5214d33ad2    0.0        160        0          150
-                  ratio  train_all  train_1  test_people
-amt_src2                                                
-6ff95b0f27cad429    0.0        177        0          154                               
-a4c431a553511705    0.0         55        0          108
-             ratio  train_all  train_1  test_people
-geo_code                                           
-ws5j      0.000000         13        0          217
-wt47      0.000000         48        0          166
-wxf9      0.000000         66        0          111
-wm6n      0.000000         92        0          106
-                    ratio  train_all  train_1  test_people
-device2                                                   
-MI 3C             0.97193        285      277          333
-VIVO X9I          0.00000         96        0          128
-
-                  ratio  train_all  train_1  test_people
-ip1_sub                                                 
-f5009e2c6c13c80c    1.0        207      207          318
-5d78ce4d5b586a2d    0.0         24        0          129
-a1cdba5f499acd05    0.0         35        0          123
+         ratio  train_all  test_people
+channel                               
+119        0.0        246          172
+         ratio  train_all  test_people
+channel                               
+118        1.0       1371         1264
+           ratio  train_all  test_people
+trans_amt                               
+4405         0.0        440          120
+7847         0.0        517          428
+                  ratio  train_all  test_people
+amt_src1                                       
+8c753ae7afb60e61    0.0        154          139
+b0a5496f0db7f70a    0.0        177          154
+                  ratio  train_all  test_people
+amt_src1                                       
+fd4d2d1006a95637    1.0       1371         1264
+                  ratio  train_all  test_people
+merchant                                       
+0b5b36b39b5cb657    0.0        177          122
+1e70ea89a4cbb3fe    0.0        304          279
+7051de5689e83caa    0.0        154          112
+                  ratio  train_all  test_people
+merchant                                       
+0e90f47392008def    1.0        828          549
+1f72814f76a984fa    1.0        291          334
+2260d61b622795fb    1.0        380          155
+2b2e7046145d9517    1.0        147          185
+4bca6018239c6201    1.0        200          310
+5776870b5747e14e    1.0        981          471
+6d55ccc689b910ee    1.0        720          322
+8b3f74a1391b5427    1.0        923          790
+922720f3827ccef8    1.0        197          631
+                  ratio  train_all  test_people
+code1                                          
+f1fa4af14fd5b68f    1.0       1340         1001
+                  ratio  train_all  test_people
+trans_type1                                    
+4adc3de71fe1a83c    0.0        177          154
+85bced5214d33ad2    0.0        160          150
+                  ratio  train_all  test_people
+amt_src2                                       
+6ff95b0f27cad429    0.0        177          154
 
 s=np.array(submit.Tag)
 s[submit[submit.UID.isin(test_op[test_op["version"]=="4.1.7"].UID.unique())].index]=1
